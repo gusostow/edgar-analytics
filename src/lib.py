@@ -1,4 +1,5 @@
 from datetime import datetime
+from collections import OrderedDict
 
 
 def read_inactivity_period(inactivity_file):
@@ -20,14 +21,6 @@ def process_row(row, header):
                          val in row_dict.items() if key in keep_cols}
     filtered_row_dict["datetime"] = time_combined_datetime
     return filtered_row_dict
-
-
-def to_list_of_dicts(input_dict):
-    output_list = []
-    for key, val_dict in input_dict.items():
-        val_dict["ip"] = key
-        output_list.append(val_dict)
-    return output_list
 
 
 def seconds_delta(datetime_end, datetime_start):
@@ -54,10 +47,10 @@ def post_process_row(session_dict):
     return output_list
 
 
-class ActiveSessions(dict):
+class ActiveSessions(OrderedDict):
 
     def __init__(self, inactivity_period=2):
-        dict.__init__(self)
+        OrderedDict.__init__(self)
         self.inactivity_period = inactivity_period
 
     def __missing__(self, key):
@@ -65,6 +58,7 @@ class ActiveSessions(dict):
             "first_request": self.current_datetime,
             "last_request": self.current_datetime,
             "request_count": 0,
+            "ip": key
         }
 
     def _isinactive(self, session):
@@ -72,17 +66,20 @@ class ActiveSessions(dict):
             self.current_datetime, session["last_request"])
         return seconds_old > self.inactivity_period
 
-    def _close_sessions(self, request_row=None, close_all=False):
-        self.closed_sessions = {}
+    def _close_sessions(self, close_all=False):
 
-        for ip, session in self.items():
-            if close_all:
-                self.closed_sessions[ip] = session
-            else:
+        if close_all:
+            self.closed_sessions = list(self.values())
+        else:
+            self.closed_sessions = []
+            for _, session in self.items():
                 if self._isinactive(session):
-                    self.closed_sessions[ip] = session
-        for ip in self.closed_sessions.keys():
-            del self[ip]
+                    self.closed_sessions.append(session)
+        
+        # Clear closed sessions
+        for closed_session in self.closed_sessions:
+            closed_ip = closed_session["ip"]
+            self.pop(closed_ip)
 
     def _update_session(self, request_row):
         self.current_datetime = request_row["datetime"]
@@ -93,13 +90,10 @@ class ActiveSessions(dict):
 
     def step(self, request_row):
         self._update_session(request_row)
-        self._close_sessions(request_row=request_row)
+        self._close_sessions()
 
-        # Convert closed sessions from a dictionary to list of dicts
-        closed_sessions_list = to_list_of_dicts(self.closed_sessions)
-        return closed_sessions_list
-    
-    def close_all_sessions(self):
+        return self.closed_sessions
+
+    def final_step(self):
         self._close_sessions(close_all=True)
-        closed_sessions_list = to_list_of_dicts(self.closed_sessions)
-        return closed_sessions_list
+        return self.closed_sessions

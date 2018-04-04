@@ -23,7 +23,7 @@ for row in log_reader:
         session_list = lib.post_process_row(session_dict)
         sessionization_writer.writerow(session_list)
 
-final_sessions = active_sessions.close_all_sessions()
+final_sessions = active_sessions.final_step()
 for session_dict in final_sessions:
     session_list = lib.post_process_row(session_dict)
     sessionization_writer.writerow(session_list)
