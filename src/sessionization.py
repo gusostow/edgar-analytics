@@ -14,7 +14,7 @@ log_reader = csv.reader(log_file)
 sessionization_writer = csv.writer(sessionization_file)
 
 inactivity_period = lib.read_inactivity_period(inactivity_file)
-active_sessions = lib.ActiveSessions(inactivity_period=inactivity_period)
+active_sessions = lib.ActiveSessions(inactivity_period)
 header = next(log_reader)
 
 for row in log_reader:
