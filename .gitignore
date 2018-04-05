@@ -43,3 +43,5 @@ ENV/
 
 # .DS_Store
 .DS_Store
+
+input/raw_data/*
