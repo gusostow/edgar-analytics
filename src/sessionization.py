@@ -1,5 +1,8 @@
-import sys
+# stdlib
 import csv
+import sys
+
+# first party
 import lib
 
 log_path = sys.argv[1]
