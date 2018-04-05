@@ -15,7 +15,7 @@ The `ActiveSessions` class is the heart of my solution. It is an `OrderedDict` w
 
 Motivation: 
 
-- I chose a hash-based data structure its constant time lookups, which if poor, would bottleneck my serial streaming approach. 
+- I chose a hash-based data structure for its constant time lookups, which if poor, would bottleneck my serial streaming approach. 
 
 - `OrderedDict` features is necessary to meet the order condition in the problem requirements for sessions closed simultaneously. Despite imposing an additional memory cost compared to a standard `dict` or an array, I weighed lookup and order preservation much higher than memory constraints for the tasks at hand. It would take a lot of active sessions to cause memory issues.
 
