@@ -1,5 +1,6 @@
-from datetime import datetime
+# stdlib
 from collections import OrderedDict
+from datetime import datetime
 
 
 def read_inactivity_period(inactivity_file):
@@ -21,7 +22,7 @@ def process_row(row, header):
     """
     row_dict = dict(zip(header, row))
 
-    # Combine 'date' and 'time' into single Datetime object
+    # Combine 'date' and 'time' strings into single Datetime object
     time_combined_str = row_dict["date"] + " " + row_dict["time"]
     time_combined_datetime = datetime.strptime(
         time_combined_str, "%Y-%m-%d %X")
@@ -80,7 +81,7 @@ class ActiveSessions(OrderedDict):
     Core data structure for EDGAR sessionization.
 
     Records the evolving set of active sessions, clearing
-    inactive sessions.
+    inactive sessions as new requests come in.
     """
 
     def __init__(self, inactivity_period):
@@ -89,7 +90,6 @@ class ActiveSessions(OrderedDict):
             inactivity_period {int} -- Number of seconds a session
             can remain active without requests
         """
-
         OrderedDict.__init__(self)
         self.inactivity_period = inactivity_period
 
@@ -116,13 +116,11 @@ class ActiveSessions(OrderedDict):
         If session does not exist that matches 'ip' creates a new one.
 
         Private method called by self.step
- 
+
         Arguments:
             processed_row_dict {dict} -- corresponds to single row
             from input log.csv, after pre-processing by process_row function
         """
-
-        self.current_datetime = processed_row_dict["datetime"]
         session = self[processed_row_dict["ip"]].copy()
         session["last_request"] = processed_row_dict["datetime"]
         session["request_count"] += 1
@@ -149,7 +147,7 @@ class ActiveSessions(OrderedDict):
             del self[closed_ip]
 
     def step(self, processed_row_dict):
-        """Evolve state by one timestep: update an active sessions /
+        """Evolve state by one timestep: update an active session /
         create a new one. Close inactive sessions.
 
         Arguments:
@@ -157,10 +155,11 @@ class ActiveSessions(OrderedDict):
             from input log.csv, after pre-processing by process_row function
 
         Returns:
-            [list] -- List of session dictionaries
+            [list] -- List of closed session dictionaries
         """
-        self._update_session(processed_row_dict)
+        self.current_datetime = processed_row_dict["datetime"]
         self._close_sessions()
+        self._update_session(processed_row_dict)
         return self.closed_sessions
 
     def final_step(self):
