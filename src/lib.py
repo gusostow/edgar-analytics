@@ -21,7 +21,6 @@ def process_row(row, header):
         [dict] -- Dictionary with keys: 'ip' and 'datetime'
     """
     row_dict = dict(zip(header, row))
-
     # Combine 'date' and 'time' strings into single Datetime object
     time_combined_str = row_dict["date"] + " " + row_dict["time"]
     time_combined_datetime = datetime.strptime(
